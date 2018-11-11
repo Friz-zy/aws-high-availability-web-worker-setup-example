@@ -1,0 +1,60 @@
+- include: deb.yml
+  when: ansible_pkg_mgr == 'apt'
+
+- name: Install python packages
+  pip: name={{item}}
+  with_items:
+    - docker-compose
+    - awscli
+
+- name: Enable docker service
+  service: name=docker state=started enabled=yes
+
+# Here you can change magic of synzronization between hosts
+- name: Mount EFS
+  mount:
+    path: {{app_shared_folder}}
+    src: /dev/XXX
+    state: present
+
+- name: Create necessary directories
+  file: path={{item}} state=directory
+  with_items:
+    - /var/log/docker
+    - {{app_shared_folder}}/logs/{{inventory_hostname}}
+    - {{app_shared_folder}}/configs
+    - {{app_shared_folder}}/scripts
+    - {{app_shared_folder}}/nginx
+    - {{app_shared_folder}}/app
+
+- name: Copy rsyslog config for docker
+  copy:
+    src: docker.rsyslog.conf
+    dest: /etc/rsyslog.d/22-docker.conf
+  notify: restart rsyslog
+
+- name: Copy logrotate config for docker
+  copy:
+    src: docker.logrotate.conf
+    dest: /etc/logrotate.d/docker
+
+- name: Create git repo for managing configs history
+  command: cd {{app_shared_folder}} && git init
+    args:
+      creates: {{app_shared_folder}}/.git
+
+- stat: path= {{app_shared_folder}}/configs/docker-compose.yml
+  register: compose_file
+
+- name: Copy the compose config
+ template:
+   src: docker-compose.yml.j2
+   dest: {{app_shared_folder}}/configs/docker-compose.yml
+ when: not compose config.stat.exists
+
+- name: Copy the deployment script
+   src: deploy.sh.j2
+   dest: {{app_shared_folder}}/scripts/deploy.sh
+    owner: root
+    group: root
+    mode: 0755

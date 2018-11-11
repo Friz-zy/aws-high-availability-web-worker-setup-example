@@ -1,0 +1,17 @@
+---
+- name: Add docker repo
+  apt_repository:
+    repo: deb [arch=amd64] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release | lower }} stable
+    state: present
+
+- name: Add docker repo key
+  apt_key:
+    url: https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg
+    state: present
+
+- name: Install docker
+  apt: name={{ item }} state=present update_cache=yes
+  with_items:
+    - docker-ce
+    - python-pip
+    - git

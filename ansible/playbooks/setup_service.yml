@@ -1,0 +1,9 @@
+---
+- name: Setup Service
+  hosts:
+    - all
+  become: yes
+  vars: []
+
+  roles:
+    - service
