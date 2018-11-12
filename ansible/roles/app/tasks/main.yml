@@ -47,22 +47,21 @@
   register: compose_file
 
 - name: Copy the compose config
- template:
-   src: docker-compose.yml.j2
-   dest: {{app_shared_folder}}/configs/docker-compose.yml
- when: not compose config.stat.exists
+  template:
+    src: docker-compose.yml.j2
+    dest: {{app_shared_folder}}/configs/docker-compose.yml
+  when: not compose config.stat.exists
 
 - name: Copy the deployment script
-   src: deploy.sh.j2
-   dest: {{app_shared_folder}}/scripts/deploy.sh
+  template:
+    src: deploy.sh.j2
+    dest: {{app_shared_folder}}/scripts/deploy.sh
     owner: root
     group: root
     mode: 0755
 
 - name: Copy the nginx config
-   src: nginx.conf.j2
-   dest: /etc/nginx/sites-enabled/app.conf
-    owner: root
-    group: root
-    mode: 0755
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/sites-enabled/app.conf
   notify: restart nginx

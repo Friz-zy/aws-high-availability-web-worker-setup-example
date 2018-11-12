@@ -1,1 +1,4 @@
 app_shared_folder: /shared
+aws_rds_host:''
+aws_rds_user:''
+aws_rds_pass:''

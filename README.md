@@ -1,6 +1,6 @@
 # High Availability Setup Example
 
-Work still in progress! Time spent: 3h 40m
+Work still in progress! Time spent: 4h 10m
 
 Stack:
   - AWS ec2 load balancer & instances, efs, rds

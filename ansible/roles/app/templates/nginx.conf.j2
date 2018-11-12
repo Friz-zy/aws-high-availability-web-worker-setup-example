@@ -1,4 +1,4 @@
-proxy_cache_path /tmp/nginx-cache-service levels=1:2 keys_zone=PROXYCACHE-service:100m inactive=6h max_size=512m;
+proxy_cache_path /tmp/nginx-cache-app levels=1:2 keys_zone=PROXYCACHE-app:100m inactive=6h max_size=512m;
 proxy_cache_key "$scheme$request_method$host$request_uri";
 proxy_cache_use_stale error timeout invalid_header http_500;
 proxy_ignore_headers Cache-Control Expires Set-Cookie;
@@ -7,12 +7,16 @@ server {
     listen 80;
     server_name _;
 
-    access_log      /var/log/nginx/service-access.log;
-    error_log       /var/log/nginx/service-error.log error;
+    access_log      /var/log/nginx/app-access.log;
+    error_log       /var/log/nginx/app-error.log error;
 
     charset utf-8;
     root {{app_shared_folder}};
     index index.html index.htm index.php;
+
+    set_real_ip_from  10.0.0.0/8;
+    real_ip_header    X-Forwarded-For;
+    real_ip_recursive on;
 
     fastcgi_buffers 8 16k;
     fastcgi_buffer_size 32k;
@@ -77,7 +81,7 @@ server {
 
         proxy_cache_bypass $skip_cache;
         proxy_no_cache $skip_cache;
-        proxy_cache PROXYCACHE-service;
+        proxy_cache PROXYCACHE-app;
         proxy_cache_valid 499 502 503 1m;
         proxy_cache_valid 404 15m;
         proxy_cache_valid any 15m;
