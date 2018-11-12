@@ -1,0 +1,101 @@
+proxy_cache_path /tmp/nginx-cache-service levels=1:2 keys_zone=PROXYCACHE-service:100m inactive=6h max_size=512m;
+proxy_cache_key "$scheme$request_method$host$request_uri";
+proxy_cache_use_stale error timeout invalid_header http_500;
+proxy_ignore_headers Cache-Control Expires Set-Cookie;
+
+server {
+    listen 80;
+    server_name _;
+
+    access_log      /var/log/nginx/service-access.log;
+    error_log       /var/log/nginx/service-error.log error;
+
+    charset utf-8;
+    root {{app_shared_folder}};
+    index index.html index.htm index.php;
+
+    fastcgi_buffers 8 16k;
+    fastcgi_buffer_size 32k;
+    client_max_body_size 30M;
+
+    # Load configuration files for the default server block.
+    include /etc/nginx/default.d/*.conf;
+
+    # Enable caching for all by default
+    set $skip_cache 0;
+
+    # Disable cache for all requests except GET and HEAD
+    if ($request_method !~ ^(GET|HEAD)$) {
+        set $no_cache "1";
+    }
+
+    # Disable cache for all requests with a query string
+    # You should disable this section if you use query string only for users tracking
+    if ($query_string != "") {
+        set $no_cache 1;
+    }
+
+    # Disable cache for all logged in users or recent commenters
+    # Add your custom cookies here!
+    if ($http_cookie ~* "nginx_no_cache|PHPSESSID") {
+        set $skip_cache 1;
+    }
+
+    location ~* \.(?:js|css|png|jpe?g|gif|ico)$ {
+        gzip on;
+        gzip_static on;
+        gzip_disable "MSIE [1-6]\.(?!.*SV1)";
+        gzip_proxied any;
+        gzip_comp_level 6;
+        gzip_buffers 16 8k;
+        gzip_http_version 1.1;
+        gzip_types
+            text/plain
+            text/css
+            text/js
+            text/xml
+            text/x-component
+            text/javascript
+            application/javascript
+            application/x-javascript
+            application/json
+            application/xml
+            application/rss+xml
+            image/svg+xml;
+
+        try_files $uri =404;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header HTTPS "on";
+
+        proxy_cache_bypass $skip_cache;
+        proxy_no_cache $skip_cache;
+        proxy_cache PROXYCACHE-service;
+        proxy_cache_valid 499 502 503 1m;
+        proxy_cache_valid 404 15m;
+        proxy_cache_valid any 15m;
+    }
+
+    location /ping {
+        set $skip_cache 1;
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header HTTPS "on";
+    }
+
+    location ~ /\. {
+        deny all;
+    }
+
+}

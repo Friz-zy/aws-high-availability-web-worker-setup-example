@@ -1,9 +1,10 @@
 ---
-- name: Setup Service
+- name: Setup Application
   hosts:
     - all
   become: yes
   vars: []
 
   roles:
-    - service
+    - nginx
+    - app

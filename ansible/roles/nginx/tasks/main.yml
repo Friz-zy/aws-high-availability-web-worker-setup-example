@@ -1,0 +1,7 @@
+- include: deb.yml
+  when: ansible_pkg_mgr == 'apt'
+
+- name: Delete default nginx config
+  file:
+    state: absent
+    path: /etc/nginx/sites-enabled/default

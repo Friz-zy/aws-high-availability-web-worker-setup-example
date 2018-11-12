@@ -1,8 +1,6 @@
 # High Availability Setup Example
 
-Work still in progress! 
-Time spent: 2h 30m
-
+Work still in progress! Time spent: 3h 40m
 
 Stack:
   - AWS ec2 load balancer & instances, efs, rds
@@ -12,8 +10,10 @@ Stack:
 
 Out of scope:
   - Security: dns, ssl, access control including VPC and Basition host, waf
+  - Infra: multisite setup, internal LB for app
   - Terraform: remote sync
   - Ansible: dynamic inventory
+  - Dev env: docker registry, CD & CI env and system
 
 How to do the same without AWS cloud:
   - Load Balancer:
@@ -24,7 +24,8 @@ How to do the same without AWS cloud:
       * any cluster fs lile ceph or glusterfs
       * some ntfs like aws efs
   - Database:
+      * you still can use some external db like aws rds
       * Mysql Galera
       * Mariadb master-master
-    Anyway you should use keepalived or haproxy or glbd for HA
+    Anyway you should use keepalived or haproxy or glbd for HA for all except first one
   - Hosts: can be any :)
