@@ -1,4 +1,6 @@
 app_shared_folder: /shared
-aws_rds_host:''
-aws_rds_user:''
-aws_rds_pass:''
+app_mysql_host: ''
+app_mysql_user: 'app'
+app_mysql_password: ''
+rds_root_user: 'root'
+rds_root_password: ''

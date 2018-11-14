@@ -1,8 +1,14 @@
 # High Availability Setup Example
 
-Work still in progress! Time spent: 11h 35m
+Work still in progress! Time spent: 13h 15m
 
 ### Whats going on?!
+
+We'll implement high availability setup for a web app, so your site or even business always would be available for customers with 99.99% SLA* and zero downtime updates**
+
+*According to [AWS SLA](https://aws.amazon.com/ru/compute/sla/)
+
+**At least while you don't wanna do the sql database schema update
 
 Requirements:
   - [Terraform](http://terraform.io/)
@@ -40,6 +46,51 @@ How to do the same without AWS cloud:
   - Hosts: can be any :)
 
 ### Before we start :)
+
+We would use some sensitive data that should never be stored in git repo, especially in public git repo  
+Data like:
+  - private aws ssh key
+  - private ssh key for app deployment
+  - mysql root password
+  - mysql app password
+
+Lucky that I already generated strongly passwords and keys for you and stored it in the encrypted vault :)  
+You can store encrypted files like this in git repos with minimum risks
+
+Vault file is `ansible/group_vars/all/vault.yml` and password is `my_vault_password`  
+(don't use so weaked passwords like this at home)
+
+So first of all, do this for preventing ansible asking vault password at each execution
+```
+cd ansible
+echo 'my_vault_password' > .vault_pass
+ansible-vault decrypt group_vars/all/vault.yml
+```
+
+Next step: terraform also require own variables, so we'll convert our ansible yaml file into terraform json
+```
+python -c 'import json, sys, yaml ; \
+y=yaml.safe_load(open("group_vars/all/vault.yml").read()) ; \
+open("../terraform/ansible.auto.tfvars", "w").write(json.dumps(y))'
+```
+
+And we also need aws ssh private key for applying ansible setup into hosts
+```
+python -c 'import json, sys, yaml ; \
+y=yaml.safe_load(open("group_vars/all/vault.yml").read()) ; \
+open("id_rsa_aws", "w").write(y["ssh_privkey"])'
+
+chmod 600 id_rsa_aws
+ssh-add id_rsa_aws
+```
+
+Finally close the vault file and change directory to the main
+```
+ansible-vault encrypt group_vars/all/vault.yml
+cd ..
+```
+
+Now we are ready to go! :)
 
 ### Create infra with Terraform
 
