@@ -1,6 +1,6 @@
 # High Availability Setup Example
 
-Work still in progress! Time spent: 13h 15m
+Work still in progress! Time spent: 13h 45m
 
 ### Whats going on?!
 
@@ -120,7 +120,7 @@ cd ../
 git reset --hard HEAD
 ```
 
-### What next?
+### What's next?
 
 Tools:
 * https://www.terraform.io

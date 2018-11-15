@@ -16,7 +16,7 @@ data "aws_ami" "ubuntu" {
 
   filter {
     name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-trusty-18.04-amd64-server-*"]
+    values = ["ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*"]
   }
 
   filter {
@@ -100,10 +100,10 @@ resource "aws_security_group" "web-sg" {
 }
 
 resource "aws_elb" "web" {
-  name              = "web-elb"
-  availability_zone = "${data.aws_availability_zones.available.names}"
-  security_groups   = ["${aws_security_group.web-sg.id}"]
-  instances         = ["${aws_instance.web-a.id}", "${aws_instance.web-b.id}"]
+  name                  = "web-elb"
+  availability_zones    = ["${data.aws_availability_zones.available.names}"]
+  security_groups       = ["${aws_security_group.web-sg.id}"]
+  instances             = ["${aws_instance.web-a.id}", "${aws_instance.web-b.id}"]
 
   listener {
     instance_port     = 80
