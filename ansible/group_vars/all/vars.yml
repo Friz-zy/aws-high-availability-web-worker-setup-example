@@ -1,2 +1,9 @@
 ansible_port: 22
-aws_rds_host:''
+
+# separate aws rds variable as it can be used in multiple apps
+aws_rds_host: ''
+
+app_efs: ''
+app_lb: ''
+app_mysql_host: "{{ aws_rds_host }}"
+mysql_root_password: "{{ rds_root_password }}"

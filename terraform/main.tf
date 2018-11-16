@@ -119,6 +119,10 @@ resource "aws_elb" "web" {
     target              = "HTTP:80/ping"
     interval            = 5
   }
+
+  provisioner "local-exec" {
+    command = "sed -i 's/^app_lb:.*$/app_lb: ${aws_elb.web.dns_name}/' ../ansible/group_vars/all/vars.yml"
+  }
 }
 
 resource "aws_instance" "web-a" {
@@ -143,6 +147,10 @@ resource "aws_instance" "web-a" {
       "sudo apt-get -y update",
       "sudo apt-get -y dist-upgrade"
     ]
+  }
+
+  provisioner "local-exec" {
+    command = "sed -i 's/^web-a.*$/web-a ansible_host=${aws_instance.web-a.public_ip}/' ../ansible/inventory"
   }
 }
 
@@ -170,6 +178,10 @@ resource "aws_instance" "web-b" {
       "sudo apt install -y nfs-common"
     ]
   }
+
+  provisioner "local-exec" {
+    command = "sed -i 's/^web-b.*$/web-b ansible_host=${aws_instance.web-b.public_ip}/' ../ansible/inventory"
+  }
 }
 
 resource "aws_efs_file_system" "web-efs" {
@@ -177,6 +189,10 @@ resource "aws_efs_file_system" "web-efs" {
 
   tags {
     Name = "web-efs"
+  }
+
+  provisioner "local-exec" {
+    command = "sed -i 's/^app_efs:.*$/app_efs: ${aws_efs_file_system.web-efs.dns_name}/' ../ansible/group_vars/all/vars.yml"
   }
 }
 
@@ -207,4 +223,8 @@ resource "aws_db_instance" "web-db" {
   multi_az                  = true
   deletion_protection       = true
   security_group_names      = ["${aws_db_security_group.default.id}"]
+
+  provisioner "local-exec" {
+    command = "sed -i 's/^aws_rds_host:.*$/aws_rds_host: ${aws_db_instance.web-db.address}/' ../ansible/group_vars/all/vars.yml"
+  }
 }

@@ -1,6 +1,8 @@
 app_shared_folder: /shared
-app_mysql_host: ''
+app_efs: ''
+app_lb: ''
+app_mysql_host: '127.0.0.1'
 app_mysql_user: 'app'
 app_mysql_password: ''
-rds_root_user: 'root'
-rds_root_password: ''
+mysql_root_user: 'root'
+mysql_root_password: ''

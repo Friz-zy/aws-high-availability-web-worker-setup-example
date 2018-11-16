@@ -1,6 +1,7 @@
 # High Availability Setup Example
 
-Work still in progress! Time spent: 13h 45m
+Work still in progress! Time spent: 15h 15m
+
 
 ### Whats going on?!
 
