@@ -192,7 +192,7 @@ resource "aws_db_security_group" "default" {
   }
 }
 
-resource "aws_db_instance" "default" {
+resource "aws_db_instance" "web-db" {
   allocated_storage         = "${var.rds_volume_size}"
   storage_type              = "gp2"
   engine                    = "mysql"
