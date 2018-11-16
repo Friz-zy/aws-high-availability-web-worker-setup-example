@@ -1,5 +1,7 @@
 *.retry
 .terraform
+*.tfstate
+*.tfstate.*
 *.auto.tfvars
 .vault_pass
 ansible/id_rsa_aws

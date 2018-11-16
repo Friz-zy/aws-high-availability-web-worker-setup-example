@@ -1,7 +1,6 @@
 # High Availability Setup Example
 
-Work still in progress! Time spent: 15h 15m
-
+Work still in progress! Time spent: 17h 25m
 
 ### Whats going on?!
 
@@ -104,6 +103,8 @@ export AWS_DEFAULT_REGION="us-west-2"
 terraform plan
 terraform apply
 ```
+
+
 
 ### Setup services and configs with Ansible
 
