@@ -31,8 +31,13 @@ data "aws_ami" "ubuntu" {
 # IAM
 #
 
-resource "aws_iam_role" "instance" {
-  name               = "web-instance-role"
+resource "aws_iam_instance_profile" "web-instance-profile" {
+  name = "web-instance-profile"
+  role = "${aws_iam_role.ec2-lb-full-access-role.name}"
+}
+
+resource "aws_iam_role" "ec2-lb-full-access-role" {
+  name               = "ec2-lb-full-access-role"
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -53,7 +58,7 @@ EOF
 }
 
 resource "aws_iam_role_policy_attachment" "ec2-lb-full-access-attachment" {
-    role = "${aws_iam_role.instance.name}"
+    role = "${aws_iam_role.ec2-lb-full-access-role.name}"
     policy_arn = "arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess"
 }
 
@@ -114,8 +119,8 @@ resource "aws_instance" "web-a" {
   ami                       = "${data.aws_ami.ubuntu.id}"
   instance_type             = "${var.instance_type}"
   key_name                  = "${aws_key_pair.ssh_key.id}"
-  security_groups           = ["${aws_security_group.web-sg.id}"]
-  iam_instance_profile      = "${aws_iam_role.instance.name}"
+  security_groups           = ["${aws_security_group.web-sg.name}"]
+  iam_instance_profile      = "${aws_iam_instance_profile.web-instance-profile.name}"
   availability_zone         = "${data.aws_availability_zones.available.names[0]}"
   disable_api_termination   = true
 
@@ -143,8 +148,8 @@ resource "aws_instance" "web-b" {
   ami                       = "${data.aws_ami.ubuntu.id}"
   instance_type             = "${var.instance_type}"
   key_name                  = "${aws_key_pair.ssh_key.id}"
-  security_groups           = ["${aws_security_group.web-sg.id}"]
-  iam_instance_profile      = "${aws_iam_role.instance.name}"
+  security_groups           = ["${aws_security_group.web-sg.name}"]
+  iam_instance_profile      = "${aws_iam_instance_profile.web-instance-profile.name}"
   availability_zone         = "${data.aws_availability_zones.available.names[1]}"
   disable_api_termination   = true
 
@@ -185,11 +190,14 @@ resource "aws_efs_file_system" "web-efs" {
 # RDS
 #
 
-resource "aws_db_security_group" "default" {
-  name = "rds_sg"
+resource "aws_security_group" "rds-sg" {
+  name = "rds-sg"
 
   ingress {
-    cidr = "10.0.0.0/16"
+    from_port   = 3306
+    to_port     = 3306
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"]
   }
 }
 
@@ -199,7 +207,7 @@ resource "aws_db_instance" "web-db" {
   engine                    = "mysql"
   engine_version            = "5.7"
   instance_class            = "${var.rds_instance_type}"
-  name                      = "web-db"
+  name                      = "webdb"
   username                  = "${var.rds_root_user}"
   password                  = "${var.rds_root_password}"
   parameter_group_name      = "default.mysql5.7"
@@ -207,7 +215,7 @@ resource "aws_db_instance" "web-db" {
   backup_retention_period   = 7
   multi_az                  = true
   deletion_protection       = true
-  security_group_names      = ["${aws_db_security_group.default.id}"]
+  vpc_security_group_ids    = ["${aws_security_group.rds-sg.id}"]
 
   provisioner "local-exec" {
     command = "sed -i 's/^aws_rds_host:.*$/aws_rds_host: ${aws_db_instance.web-db.address}/' ../ansible/group_vars/all/vars.yml"

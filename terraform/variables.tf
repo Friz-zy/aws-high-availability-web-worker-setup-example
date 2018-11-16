@@ -17,7 +17,7 @@ variable "rds_instance_type" {
 }
 
 variable "rds_volume_size" {
-  default = "1"
+  default = "10"
 }
 
 variable "rds_root_user" {
