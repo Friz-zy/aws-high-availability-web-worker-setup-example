@@ -66,6 +66,8 @@ resource "aws_iam_role_policy_attachment" "ec2-lb-full-access-attachment" {
 # EC2
 #
 
+# TODO: add VPC as EC2-Classic now assign default VPC without outgoing rules and access to web
+
 resource "aws_key_pair" "ssh_key" {
   key_name   = "${var.ssh_key_name}"
   public_key = "${var.ssh_pubkey}"
@@ -122,7 +124,7 @@ resource "aws_instance" "web-a" {
   security_groups           = ["${aws_security_group.web-sg.name}"]
   iam_instance_profile      = "${aws_iam_instance_profile.web-instance-profile.name}"
   availability_zone         = "${data.aws_availability_zones.available.names[0]}"
-  disable_api_termination   = true
+  disable_api_termination   = false     # change to true for production
 
   tags {
     Name = "web-a"
@@ -151,7 +153,7 @@ resource "aws_instance" "web-b" {
   security_groups           = ["${aws_security_group.web-sg.name}"]
   iam_instance_profile      = "${aws_iam_instance_profile.web-instance-profile.name}"
   availability_zone         = "${data.aws_availability_zones.available.names[1]}"
-  disable_api_termination   = true
+  disable_api_termination   = false     # change to true for production
 
   tags {
     Name = "web-b"
@@ -202,19 +204,21 @@ resource "aws_security_group" "rds-sg" {
 }
 
 resource "aws_db_instance" "web-db" {
+  identifier                = "web-db"
   allocated_storage         = "${var.rds_volume_size}"
   storage_type              = "gp2"
   engine                    = "mysql"
   engine_version            = "5.7"
   instance_class            = "${var.rds_instance_type}"
-  name                      = "webdb"
   username                  = "${var.rds_root_user}"
   password                  = "${var.rds_root_password}"
   parameter_group_name      = "default.mysql5.7"
   apply_immediately         = true
   backup_retention_period   = 7
   multi_az                  = true
-  deletion_protection       = true
+  deletion_protection       = false     # change to true for production
+  skip_final_snapshot       = true     # change to false for production
+  final_snapshot_identifier = "web-db-final-snapshot"
   vpc_security_group_ids    = ["${aws_security_group.rds-sg.id}"]
 
   provisioner "local-exec" {
