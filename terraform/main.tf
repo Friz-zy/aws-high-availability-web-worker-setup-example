@@ -204,6 +204,16 @@ resource "aws_efs_file_system" "web-efs" {
   }
 }
 
+resource "aws_efs_mount_target" "web-a" {
+  file_system_id = "${aws_efs_file_system.web-efs.id}"
+  subnet_id      = "${aws_instance.web-a.subnet_id}"
+}
+
+resource "aws_efs_mount_target" "web-b" {
+  file_system_id = "${aws_efs_file_system.web-efs.id}"
+  subnet_id      = "${aws_instance.web-b.subnet_id}"
+}
+
 #
 # RDS
 #
