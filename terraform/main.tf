@@ -11,6 +11,18 @@ provider "aws" {}
 
 data "aws_availability_zones" "available" {}
 
+data "aws_security_group" "default" {
+  filter {
+    name   = "group-name"
+    values = ["default"]
+  }
+
+  filter {
+    name   = "description"
+    values = ["default VPC security group"]
+  }
+}
+
 data "aws_ami" "ubuntu" {
   most_recent = true
 
@@ -66,8 +78,6 @@ resource "aws_iam_role_policy_attachment" "ec2-lb-full-access-attachment" {
 # EC2
 #
 
-# TODO: add VPC as EC2-Classic now assign default VPC without outgoing rules and access to web
-
 resource "aws_key_pair" "ssh_key" {
   key_name   = "${var.ssh_key_name}"
   public_key = "${var.ssh_pubkey}"
@@ -117,11 +127,16 @@ resource "aws_elb" "web" {
   }
 }
 
+# yes, I know about templates
+# https://www.terraform.io/docs/configuration/interpolation.html#using-templates-with-count
+# but copy paste is easier for now
+
 resource "aws_instance" "web-a" {
   ami                       = "${data.aws_ami.ubuntu.id}"
   instance_type             = "${var.instance_type}"
   key_name                  = "${aws_key_pair.ssh_key.id}"
-  security_groups           = ["${aws_security_group.web-sg.name}"]
+  security_groups           = ["${aws_security_group.web-sg.name}",
+                               "${data.aws_security_group.default.name}"]
   iam_instance_profile      = "${aws_iam_instance_profile.web-instance-profile.name}"
   availability_zone         = "${data.aws_availability_zones.available.names[0]}"
   disable_api_termination   = false     # change to true for production
@@ -150,7 +165,8 @@ resource "aws_instance" "web-b" {
   ami                       = "${data.aws_ami.ubuntu.id}"
   instance_type             = "${var.instance_type}"
   key_name                  = "${aws_key_pair.ssh_key.id}"
-  security_groups           = ["${aws_security_group.web-sg.name}"]
+  security_groups           = ["${aws_security_group.web-sg.name}",
+                               "${data.aws_security_group.default.name}"]
   iam_instance_profile      = "${aws_iam_instance_profile.web-instance-profile.name}"
   availability_zone         = "${data.aws_availability_zones.available.names[1]}"
   disable_api_termination   = false     # change to true for production
@@ -192,17 +208,6 @@ resource "aws_efs_file_system" "web-efs" {
 # RDS
 #
 
-resource "aws_security_group" "rds-sg" {
-  name = "rds-sg"
-
-  ingress {
-    from_port   = 3306
-    to_port     = 3306
-    protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/16"]
-  }
-}
-
 resource "aws_db_instance" "web-db" {
   identifier                = "web-db"
   allocated_storage         = "${var.rds_volume_size}"
@@ -219,7 +224,7 @@ resource "aws_db_instance" "web-db" {
   deletion_protection       = false     # change to true for production
   skip_final_snapshot       = true     # change to false for production
   final_snapshot_identifier = "web-db-final-snapshot"
-  vpc_security_group_ids    = ["${aws_security_group.rds-sg.id}"]
+  vpc_security_group_ids    = ["${data.aws_security_group.default.id}"]
 
   provisioner "local-exec" {
     command = "sed -i 's/^aws_rds_host:.*$/aws_rds_host: ${aws_db_instance.web-db.address}/' ../ansible/group_vars/all/vars.yml"
