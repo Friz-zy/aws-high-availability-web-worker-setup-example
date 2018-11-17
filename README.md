@@ -1,7 +1,7 @@
 # High Availability Setup Example
 
 Initial estimation: 20h  
-Work still in progress! Time spent: 17h 25m
+Work still in progress! Time spent: 18h 55m
 
 ### Whats going on?!
 
@@ -128,6 +128,7 @@ git reset --hard HEAD
 Tools:
 * https://www.terraform.io
 * https://aws.amazon.com/ru/blogs/apn/terraform-beyond-the-basics-with-aws/
+* https://checklyhq.com/blog/2018/08/an-in-depth-look-at-100-zero-downtime-deployments-with-terraform/
 * https://github.com/leucos/ansible-tuto
 * https://docs.docker.com/compose/
 
