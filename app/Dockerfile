@@ -1,6 +1,6 @@
 FROM python:3
 
-ADD script.py /
+ADD app.py /
 
 RUN pip install vibora[fast]
 
