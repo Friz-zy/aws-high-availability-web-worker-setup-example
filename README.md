@@ -1,7 +1,8 @@
 # High Availability Setup Example
 
 Initial estimation: 20h  
-Work still in progress! Time spent: 19h 25m
+Work still in progress! Time spent: 19h 25m  
+Playing with python Vibora: 4h 40m
 
 ### Whats going on?!
 
@@ -105,14 +106,100 @@ terraform plan
 terraform apply
 ```
 
+After dozen of minutes (thanks to rds db creation) you'll finally get something like this:
+```
+Apply complete! Resources: 12 added, 0 changed, 0 destroyed.
 
+Outputs:
+
+efs = fs-80a57228.efs.us-west-2.amazonaws.com
+web-a = 34.219.137.185
+web-b = 34.221.216.70
+web-db = web-db.cylt5xazlrm6.us-west-2.rds.amazonaws.com
+web-lb = web-elb-1230834140.us-west-2.elb.amazonaws.com
+```
+
+Terrafrom also updated ansible variables:
+```
+diff --git a/ansible/group_vars/all/vars.yml b/ansible/group_vars/all/vars.yml
+index 853eb00..df57033 100644
+--- a/ansible/group_vars/all/vars.yml
++++ b/ansible/group_vars/all/vars.yml
+@@ -1,9 +1,9 @@
+ ansible_port: 22
+ 
+ # separate aws rds variable as it can be used in multiple apps
+-aws_rds_host: ''
++aws_rds_host: web-db.cylt5xazlrm6.us-west-2.rds.amazonaws.com
+ 
+-app_efs: ''
+-app_lb: ''
++app_efs: fs-80a57228.efs.us-west-2.amazonaws.com
++app_lb: web-elb-1230834140.us-west-2.elb.amazonaws.com
+ app_mysql_host: "{{ aws_rds_host }}"
+ mysql_root_password: "{{ rds_root_password }}"
+\ No newline at end of file
+diff --git a/ansible/inventory b/ansible/inventory
+index eee5423..4be85db 100644
+--- a/ansible/inventory
++++ b/ansible/inventory
+@@ -1,2 +1,2 @@
+-web-a
+-web-b
++web-a ansible_host=34.219.137.185
++web-b ansible_host=34.221.216.70
+```
+For serious setup better use Ansible dynamic inventory but for now it's fine :)
 
 ### Setup services and configs with Ansible
 
-```
-cd ../ansible
+`cd ../ansible`
 
+First of all we'll install python2 into servers as ansible require it
 ```
+ansible-playbook playbooks/ansible-bootstrap-ubuntu.yml
+```
+
+After that we'll install basic packages, hostname and small fixes
+```
+ansible-playbook playbooks/common.yml
+```
+
+And finally we'll setup our app environment
+```
+ansible-playbook playbooks/setup_application.yml
+```
+
+Latest playbook did almost all the magic:
+  * install necessary soft like nginx, docker & docker-compose
+  * create directories for shared file system and docker logs
+  * mount aws efs into shared directory
+  * copy nginx and compose configs
+  * copy deployment script with ssh keys
+  * create app user and database
+
+### Finally run the app
+
+`ssh ubuntu@$(cd ../terraform; terraform output web-a)`
+
+We'll use dummy web app as an our setup payload.
+
+I played a little with python [vibora](https://github.com/vibora-io/vibora) framework  
+and created docker container for you and uploaded it to the [hub](https://hub.docker.com/r/filippfrizzy/pong/).  
+
+Most of the time I struggled with installing [process](https://github.com/vibora-io/vibora/issues/192) or [outdated documentation](https://github.com/vibora-io/vibora/issues/51),  
+so I advise you to use it only for experiments and nothing more =\  
+However this framework looks promisingly.
+
+You can find sources in the `app` directory in this repo.
+
+This app would rerutn `hello world` to the `/` request  
+and `pong` to the `/ping` request.  
+We'll run it in the docker container with our docker-compose config file:
+`cat /shared/configs/docker-compose.yml`
+Ansible created it from `roles/app/templates/docker-compose.yml.j2` template
+
+
 
 ### Don't forget to clean all in the end!
 

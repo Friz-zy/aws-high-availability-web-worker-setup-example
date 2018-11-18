@@ -1,19 +1,14 @@
-from datetime import datetime
-from vibora import Vibora, Response
+from vibora import Vibora, Request, Response
 
 app = Vibora()
 
 
 @app.route('/')
-async def home():
-    values = await request.json()
-    print(datetime.now(), values)
+async def home(request: Request):
     return Response(b'Hello world')
 
 @app.route('/ping')
-async def home():
-    values = await request.json()
-    print(datetime.now(), values)
+async def ping(request: Request):
     return Response(b'pong')
 
 if __name__ == '__main__':
