@@ -8,9 +8,56 @@ Playing with python Vibora: 4h 40m
 
 We'll implement high availability setup for a web app, so your site or even business always would be available for customers with 99.99% SLA* and zero downtime updates**
 
-*According to [AWS SLA](https://aws.amazon.com/ru/compute/sla/)
-
+*According to [AWS SLA](https://aws.amazon.com/ru/compute/sla/)  
 **At least while you don't wanna do the sql database schema update
+
+```
+                                                   AWS Cloud
+
+
+     +------------------------------------------+ Load Balancer +-----------------------------------------+
+     |                                                                                                    |
+     |                                                                                                    |
+     |                                                                                                    |
+     |    Availability Zone A                                                  Availability Zone B        |
+     |                                                                                                    |
+     |                                                                                                    |
+     |                                                                                                    |
++----v-----------------------------+                                         +----------------------------v----+
+|                                  |                                         |                                 |
+|  Host A                          |     +------------------------------+    |  Host B                         |
+|                                  |     |                              |    |                                 |
+|                                  <-----+       Elastic FS             +---->                                 |
+|    * Nginx                       |     |                              |    |    * Nginx                      |
+|                                  |     |                              |    |                                 |
+|                                  |     |   * Shared data              |    |                                 |
+|    +-------------------------+   |     |                              |    |                                 |
+|    |                         |   |     |   * Configs                  |    |    +-----------------------+    |
+|    | Docker                  |   |     |                              |    |    |                       |    |
+|    |                         |   |     |   * Deployment scripts       |    |    | Docker                |    |
+|    |   * web app             |   |     |                              |    |    |                       |    |
+|    |                         |   |     |                              |    |    |   * web app           |    |
+|    |                         |   |     +------------------------------+    |    |                       |    |
+|    |                         |   |                                         |    |                       |    |
+|    +-------------------------+   |                                         |    +-----------------------+    |
+|                                  |                                         |                                 |
++------------------------------+---+                                         +---+-----------------------------+
+                               |                                                 |
+                               |                                                 |
+                               |                                                 |
+                               |                                                 |
+                               |                                                 |
+                               |                                                 |
+                               |      +----------------------------------+       |
+                               |      |                                  |       |
+                               +------>  AWS RDS database                <-------+
+                                      |                                  |
+                                      |    * web app database            |
+                                      |                                  |
+                                      |                                  |
+                                      +----------------------------------+
+
+```
 
 Requirements:
   - [Terraform](http://terraform.io/)
