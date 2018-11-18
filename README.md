@@ -11,7 +11,7 @@ We'll implement high availability setup for a web app, so your site or even busi
 *According to [AWS SLA](https://aws.amazon.com/ru/compute/sla/)  
 **At least while you don't wanna do the sql database schema update
 
-![ascii aws schema](./ascii_schema.png)
+<img src="./ascii_schema.png" width="700" alt="ascii aws schema">
 
 Requirements:
   - [Terraform](http://terraform.io/)
