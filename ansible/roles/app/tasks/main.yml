@@ -6,6 +6,7 @@
   with_items:
     - docker-compose
     - awscli
+    - PyMySQL
 
 - name: Enable docker service
   service: name=docker state=started enabled=yes
@@ -24,11 +25,11 @@
   file: path={{item}} state=directory
   with_items:
     - /var/log/docker
-    - {{app_shared_folder}}/configs
-    - {{app_shared_folder}}/scripts
-    - {{app_shared_folder}}/nginx
-    - {{app_shared_folder}}/app
-#   - {{app_shared_folder}}/logs/{{inventory_hostname}}
+    - "{{app_shared_folder}}/configs"
+    - "{{app_shared_folder}}/scripts"
+    - "{{app_shared_folder}}/nginx"
+    - "{{app_shared_folder}}/app"
+#   - "{{app_shared_folder}}/logs/{{inventory_hostname}}"
 
 - name: Copy rsyslog config for docker
   copy:
@@ -42,9 +43,9 @@
     dest: /etc/logrotate.d/docker
 
 - name: Create git repo for managing configs history
-  command: cd {{app_shared_folder}} && git init
-    args:
-      creates: "{{app_shared_folder}}/.git"
+  shell: cd {{app_shared_folder}}/configs && git init
+  args:
+    creates: "{{app_shared_folder}}/.git/config"
 
 - stat: path={{app_shared_folder}}/configs/docker-compose.yml
   register: compose_file
@@ -53,7 +54,7 @@
   template:
     src: docker-compose.yml.j2
     dest: "{{app_shared_folder}}/configs/docker-compose.yml"
-  when: not compose config.stat.exists
+  when: not compose_file.stat.exists
 
 - name: Copy the deployment script
   template:

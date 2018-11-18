@@ -4,18 +4,18 @@
   become: yes
 
   tasks:
-    #- name: Add new hostname into hosts file
-      #replace:
-        #backup: yes
-        #dest: /etc/hosts
-        #regexp: '^({{ item }}(?!.*\b{{ inventory_hostname }}\b).*)$'
-        #replace: '\1 {{  inventory_hostname }}'
-      #with_items:
-        #- 127.0.0.1
-        #- ::1
+    - name: Add new hostname into hosts file
+      replace:
+        backup: yes
+        dest: /etc/hosts
+        regexp: '^({{ item }}(?!.*\b{{ inventory_hostname }}\b).*)$'
+        replace: '\1 {{  inventory_hostname }}'
+      with_items:
+        - 127.0.0.1
+        - ::1
 
-    #- name: Set hostname as in ansible inventory
-      #hostname: name="{{ inventory_hostname }}"
+    - name: Set hostname as in ansible inventory
+      hostname: name="{{ inventory_hostname }}"
 
     - name: Install minimum useful packages
       package: name="{{ item }}" state=present
