@@ -13,9 +13,12 @@
 # Here you can change magic of synzronization between hosts
 - name: Mount EFS
   mount:
-    path: {{app_shared_folder}}
-    src: /dev/XXX
-    state: present
+    path: "{{ app_shared_folder }}"
+    src: "{{ app_efs }}:/"
+    fstype: nfs4
+    opts: nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2
+    state: mounted
+    backup: yes
 
 - name: Create necessary directories
   file: path={{item}} state=directory
@@ -41,27 +44,70 @@
 - name: Create git repo for managing configs history
   command: cd {{app_shared_folder}} && git init
     args:
-      creates: {{app_shared_folder}}/.git
+      creates: "{{app_shared_folder}}/.git"
 
-- stat: path= {{app_shared_folder}}/configs/docker-compose.yml
+- stat: path={{app_shared_folder}}/configs/docker-compose.yml
   register: compose_file
 
 - name: Copy the compose config
   template:
     src: docker-compose.yml.j2
-    dest: {{app_shared_folder}}/configs/docker-compose.yml
+    dest: "{{app_shared_folder}}/configs/docker-compose.yml"
   when: not compose config.stat.exists
 
 - name: Copy the deployment script
   template:
     src: deploy.sh.j2
-    dest: {{app_shared_folder}}/scripts/deploy.sh
+    dest: "{{app_shared_folder}}/scripts/deploy.sh"
     owner: root
     group: root
     mode: 0755
+
+- name: Copy app deployment ssh private key
+  copy:
+    content: "{{ app_ssh_privkey }}"
+    dest: "{{app_shared_folder}}/scripts/id_rsa_app"
+    owner: root
+    group: root
+    mode: 0600
+
+- name: Copy app deployment ssh public key
+  copy:
+    content: "{{ app_ssh_pubkey }}"
+    dest: "{{app_shared_folder}}/scripts/id_rsa_app.pub"
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Add app key into root user for deployments
+  authorized_key:
+    user: root
+    state: present
+    key: "{{ app_ssh_pubkey }}"
 
 - name: Copy the nginx config
   template:
     src: nginx.conf.j2
     dest: /etc/nginx/sites-enabled/app.conf
   notify: restart nginx
+
+- name: Create app mysql database
+  mysql_db:
+    name: "{{ app_mysql_database }}"
+    login_host: "{{ app_mysql_host }}"
+    login_user: "{{ mysql_root_user }}"
+    login_password: "{{ mysql_root_password }}"
+    state: present
+  run_once: true
+
+- name: Create app mysql user
+  mysql_user:
+    name: "{{ app_mysql_user }}"
+    host: "%"
+    password: "{{ app_mysql_password }}"
+    priv: '{{app_mysql_database}}.*:ALL'
+    login_host: "{{ app_mysql_host }}"
+    login_user: "{{ mysql_root_user }}"
+    login_password: "{{ mysql_root_password }}"
+    state: present
+  run_once: true
