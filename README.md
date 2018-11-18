@@ -198,11 +198,11 @@ We'll run it in the docker container with our docker-compose config file:
 `cat /shared/configs/docker-compose.yml`.
 Ansible created it from `roles/app/templates/docker-compose.yml.j2` template.
 
-We'll run it in the docker container with our docker-compose config file:
-`cat /shared/configs/docker-compose.yml`.
-Ansible created it from `roles/app/templates/docker-compose.yml.j2` template.
+Don't forget to commit this config into git for history!  
+`cd /shared/configs/ && git commit -a -m"add docker-compose.yml"`
 
-Deployment script will help us with this. You can check it before execution:  
+Deployment script will help us with first deployment (and with later updates).  
+You can check it before execution:  
 `cat /shared/scripts/deploy.sh`  
 It was also created by Ansible from `roles/app/templates/deploy.sh.j2` template.
 
@@ -214,7 +214,7 @@ sudo bash /shared/scripts/deploy.sh all
 If all was fine and you didn't see something like 'I'm aborting deployment',  
 then you can log off with `exit` command and finally check your setup:
 ```
-curl $(cd ../terraform; terraform output web-lb)
+curl -v $(cd ../terraform; terraform output web-lb)
 ```
 
 Hooray, we did it!
