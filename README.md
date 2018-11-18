@@ -22,7 +22,8 @@ Requirements:
 
 Stack:
   - AWS ec2 load balancer & instances, efs, rds
-  - Docker containers and compose for running nginx + application
+  - Nginx as frontend web server with cache and static content serving
+  - Docker containers and compose for running application
   - Terraform for configuring AWS infra
   - Ansible for configuring everything on the hosts
 
