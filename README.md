@@ -1,7 +1,7 @@
 # High Availability Setup Example
 
 Initial estimation: 20h  
-Work still in progress! Time spent: 21h 55m  
+Time spent: 21h 55m during 1 week  
 Playing with python Vibora: 4h 40m
 
 ### Whats going on?!
