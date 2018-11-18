@@ -1,7 +1,7 @@
 # High Availability Setup Example
 
 Initial estimation: 20h  
-Work still in progress! Time spent: 18h 55m
+Work still in progress! Time spent: 19h 25m
 
 ### Whats going on?!
 
