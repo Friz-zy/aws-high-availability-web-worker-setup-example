@@ -1,0 +1,56 @@
+#!/bin/bash
+
+HOSTS="{{ groups['all'] | map('extract', hostvars, ['ansible_host']) | join(',') }}"
+
+POSITIONAL=()
+while [[ $# -gt 0 ]]
+do
+key="$1"
+
+case $key in
+    -h|--help)
+    echo "usage: [--hosts <hosts>] app|all"
+    exit 0
+    ;;
+    --hosts)
+    HOSTS="$2"
+    shift # past argument
+    shift # past value
+    ;;
+    *)    # unknown option
+    POSITIONAL+=("$1") # save it in an array for later
+    shift # past argument
+    ;;
+esac
+done
+set -- "${POSITIONAL[@]}" # restore positional parameters
+
+if [ -z "$POSITIONAL" ]; then
+    echo "usage: [--hosts <hosts>] app|all"
+    exit 0
+fi
+
+IFS=';, ' read -ra ADDR <<< "$HOSTS"
+for h in "${ADDR[@]}"; do
+    echo "processing $h host"
+
+    if [[ "${POSITIONAL[0]}" == "all" ]]; then
+        ssh -i {{app_shared_folder}}/scripts/id_rsa_app root@$h docker-compose -f {{app_shared_folder}}/configs/docker-compose.yml up -d
+        if [ $? -eq 0 ]
+        then
+            echo "$h host updated"
+        else
+            echo "$h host failed. I'm aborting deployment"
+            exit 1
+        fi
+    elif [[ "${POSITIONAL[0]}" == "app" ]]; then
+        ssh -i {{app_shared_folder}}/scripts/id_rsa_app root@$h /usr/sbin/compose -f {{app_shared_folder}}/configs/docker-compose.yml up -d app
+        if [ $? -eq 0 ]
+        then
+            echo "$h host updated"
+        else
+            echo "$h host failed. I'm aborting deployment"
+            exit 1
+        fi
+done
+
