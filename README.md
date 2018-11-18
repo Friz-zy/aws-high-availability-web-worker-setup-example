@@ -11,53 +11,7 @@ We'll implement high availability setup for a web app, so your site or even busi
 *According to [AWS SLA](https://aws.amazon.com/ru/compute/sla/)  
 **At least while you don't wanna do the sql database schema update
 
-```
-                                                   AWS Cloud
-
-
-     +------------------------------------------+ Load Balancer +-----------------------------------------+
-     |                                                                                                    |
-     |                                                                                                    |
-     |                                                                                                    |
-     |    Availability Zone A                                                  Availability Zone B        |
-     |                                                                                                    |
-     |                                                                                                    |
-     |                                                                                                    |
-+----v-----------------------------+                                         +----------------------------v----+
-|                                  |                                         |                                 |
-|  Host A                          |     +------------------------------+    |  Host B                         |
-|                                  |     |                              |    |                                 |
-|                                  <-----+       Elastic FS             +---->                                 |
-|    * Nginx                       |     |                              |    |    * Nginx                      |
-|                                  |     |                              |    |                                 |
-|                                  |     |   * Shared data              |    |                                 |
-|    +-------------------------+   |     |                              |    |                                 |
-|    |                         |   |     |   * Configs                  |    |    +-----------------------+    |
-|    | Docker                  |   |     |                              |    |    |                       |    |
-|    |                         |   |     |   * Deployment scripts       |    |    | Docker                |    |
-|    |   * web app             |   |     |                              |    |    |                       |    |
-|    |                         |   |     |                              |    |    |   * web app           |    |
-|    |                         |   |     +------------------------------+    |    |                       |    |
-|    |                         |   |                                         |    |                       |    |
-|    +-------------------------+   |                                         |    +-----------------------+    |
-|                                  |                                         |                                 |
-+------------------------------+---+                                         +---+-----------------------------+
-                               |                                                 |
-                               |                                                 |
-                               |                                                 |
-                               |                                                 |
-                               |                                                 |
-                               |                                                 |
-                               |      +----------------------------------+       |
-                               |      |                                  |       |
-                               +------>  AWS RDS database                <-------+
-                                      |                                  |
-                                      |    * web app database            |
-                                      |                                  |
-                                      |                                  |
-                                      +----------------------------------+
-
-```
+![ascii aws schema](./ascii_schema.png)
 
 Requirements:
   - [Terraform](http://terraform.io/)
