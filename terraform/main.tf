@@ -149,13 +149,6 @@ resource "aws_instance" "web-a" {
     user = "ubuntu"
   }
 
-  provisioner "remote-exec" {
-    inline = [
-      "sudo apt-get -y update",
-      "sudo apt-get -y dist-upgrade"
-    ]
-  }
-
   provisioner "local-exec" {
     command = "sed -i 's/^web-a.*$/web-a ansible_host=${aws_instance.web-a.public_ip}/' ../ansible/inventory"
   }
@@ -177,14 +170,6 @@ resource "aws_instance" "web-b" {
 
   connection {
     user = "ubuntu"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo apt-get -y update",
-      "sudo apt-get -y dist-upgrade",
-      "sudo apt install -y nfs-common"
-    ]
   }
 
   provisioner "local-exec" {
