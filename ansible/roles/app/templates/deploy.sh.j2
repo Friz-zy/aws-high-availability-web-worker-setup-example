@@ -1,6 +1,10 @@
 #!/bin/bash
 
 HOSTS="{{ groups['all'] | map('extract', hostvars, ['ansible_host']) | join(',') }}"
+BALANCER="{{ app_lb }}"
+SSH_OPTIONS="-o StrictHostKeyChecking=no -i {{app_shared_folder}}/scripts/id_rsa_app"
+
+export AWS_DEFAULT_REGION="{{ aws_region }}"
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]
@@ -34,8 +38,24 @@ IFS=';, ' read -ra ADDR <<< "$HOSTS"
 for h in "${ADDR[@]}"; do
     echo "processing $h host"
 
+    instanceId=$(aws ec2 describe-instances --filter Name=ip-address,Values=$h|jq -r '.Reservations[].Instances[] | .InstanceId')
+
+    echo "Deregister instances $instanceId from load balancer $BALANCER"
+    aws elb deregister-instances-from-load-balancer --load-balancer-name $BALANCER --instances $instanceId
+    if [ $? -eq 0 ]
+    then
+        echo "$h host removed from LB"
+    else
+        echo "Can't remove $h host from LB. I'm aborting deployment"
+        exit 1
+    fi
+
+    echo "Sleep 6 seconds"
+    sleep 6
+
+
     if [[ "${POSITIONAL[0]}" == "all" ]]; then
-        ssh -i {{app_shared_folder}}/scripts/id_rsa_app root@$h docker-compose -f {{app_shared_folder}}/configs/docker-compose.yml up -d
+        ssh $SSH_OPTIONS root@$h docker-compose -f {{app_shared_folder}}/configs/docker-compose.yml up -d
         if [ $? -eq 0 ]
         then
             echo "$h host updated"
@@ -44,7 +64,7 @@ for h in "${ADDR[@]}"; do
             exit 1
         fi
     elif [[ "${POSITIONAL[0]}" == "app" ]]; then
-        ssh -i {{app_shared_folder}}/scripts/id_rsa_app root@$h /usr/sbin/compose -f {{app_shared_folder}}/configs/docker-compose.yml up -d app
+        ssh $SSH_OPTIONS root@$h /usr/sbin/compose -f {{app_shared_folder}}/configs/docker-compose.yml up -d app
         if [ $? -eq 0 ]
         then
             echo "$h host updated"
@@ -52,5 +72,39 @@ for h in "${ADDR[@]}"; do
             echo "$h host failed. I'm aborting deployment"
             exit 1
         fi
+    fi
+
+    echo "Sleep 10 seconds after container startup"
+    sleep 10
+
+    echo "Check web app"
+    pong=$(ssh $SSH_OPTIONS root@$h curl -s localhost/ping)
+    if [ "$pong" != "pong" ]; then
+        echo "Can't get 'pong' response from app. I'm aborting deployment"
+        exit 1
+    fi
+
+    echo "Register instances $instanceId back to load balancer $BALANCER"
+    aws elb register-instances-with-load-balancer --load-balancer-name $BALANCER --instances $instanceId
+    if [ $? -eq 0 ]
+    then
+        echo "$h host added to LB"
+    else
+        echo "Can't add $h host back to LB. I'm aborting deployment"
+        exit 1
+    fi
+
+    echo "Sleep 15 seconds"
+    sleep 15
+
+    echo "Checking instance $instanceId state in $BALANCER LB"
+    instanceState=$(aws elb describe-instance-health --load-balancer-name $BALANCER --instances $instanceId|jq -r '.InstanceStates[]| .State')
+    if [ "$instanceState" == "OutOfService" ]; then
+        echo "Instance $instanceId still out of service. I'm aborting deployment"
+        exit 1
+    fi
+
+    echo "Host $h with ID $instanceId successfully updated"
+
 done
 

@@ -16,3 +16,4 @@
     - python-pip
     - git
     - nfs-common
+    - jq

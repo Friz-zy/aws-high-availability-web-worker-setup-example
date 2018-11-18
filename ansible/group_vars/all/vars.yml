@@ -2,6 +2,7 @@ ansible_port: 22
 
 # separate aws rds variable as it can be used in multiple apps
 aws_rds_host: ''
+aws_region: "us-west-2"
 
 app_efs: ''
 app_lb: ''

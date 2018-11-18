@@ -45,7 +45,7 @@
 - name: Create git repo for managing configs history
   shell: cd {{app_shared_folder}}/configs && git init
   args:
-    creates: "{{app_shared_folder}}/.git/config"
+    creates: "{{app_shared_folder}}/configs/.git/config"
 
 - stat: path={{app_shared_folder}}/configs/docker-compose.yml
   register: compose_file
@@ -91,6 +91,8 @@
     src: nginx.conf.j2
     dest: /etc/nginx/sites-enabled/app.conf
   notify: restart nginx
+
+- meta: flush_handlers
 
 - name: Create app mysql database
   mysql_db:

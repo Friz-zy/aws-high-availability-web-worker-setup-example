@@ -7,3 +7,4 @@ app_mysql_password: ''
 app_mysql_database: 'app'
 mysql_root_user: 'root'
 mysql_root_password: ''
+aws_region: "us-west-2"
