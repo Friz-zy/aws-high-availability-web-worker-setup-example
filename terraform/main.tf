@@ -104,7 +104,8 @@ resource "aws_security_group" "web-sg" {
 resource "aws_elb" "web" {
   name                  = "web-elb"
   availability_zones    = ["${data.aws_availability_zones.available.names}"]
-  security_groups       = ["${aws_security_group.web-sg.id}"]
+  security_groups       = ["${aws_security_group.web-sg.id}",
+                           "${data.aws_security_group.default.id}"]
   instances             = ["${aws_instance.web-a.id}", "${aws_instance.web-b.id}"]
 
   listener {
@@ -123,7 +124,7 @@ resource "aws_elb" "web" {
   }
 
   provisioner "local-exec" {
-    command = "sed -i 's/^app_lb:.*$/app_lb: ${aws_elb.web.dns_name}/' ../ansible/group_vars/all/vars.yml"
+    command = "sed -i 's/^app_lb:.*$/app_lb: ${aws_elb.web.name}/' ../ansible/group_vars/all/vars.yml"
   }
 }
 
