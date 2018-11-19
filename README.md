@@ -45,7 +45,7 @@ How to do the same without AWS cloud:
   - Database:
       * you still can use some external db like aws rds
       * Mysql Galera
-      * Mariadb master-master
+      * Mariadb master-master  
     Anyway you should use keepalived or haproxy or glbd for HA for all except first one
   - Hosts: can be any :)
 
